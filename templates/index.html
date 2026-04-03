@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sarcasm Recognizer | Multimodal Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-cyan: #00f3ff; --neon-red: #ff003c; --neon-green: #00ff66;
+            --neon-purple: #b026ff; --dark-bg: #050914; --panel-bg: rgba(10, 20, 40, 0.8);
+        }
+
+        body {
+            background-color: var(--dark-bg); color: #ffffff; font-family: 'Rajdhani', sans-serif;
+            margin: 0; padding: 40px 20px;
+            background-image: radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.1), transparent 50%), linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 3rem; color: var(--neon-cyan); text-shadow: 0 0 20px rgba(0, 243, 255, 0.5); margin: 0; }
+        .subtitle { color: #8892b0; letter-spacing: 3px; font-size: 1.2rem; margin-top: 5px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .panel { background: var(--panel-bg); border: 1px solid rgba(0, 243, 255, 0.2); border-radius: 10px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
+        
+        textarea { width: 100%; height: 120px; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 243, 255, 0.3); border-radius: 5px; color: var(--neon-cyan); padding: 15px; font-family: 'Rajdhani', sans-serif; font-size: 1.2rem; resize: none; outline: none; box-sizing: border-box; margin-bottom: 20px; }
+        textarea:focus { border-color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
+
+        .btn-group { display: flex; gap: 15px; margin-bottom: 20px; }
+        .btn { flex: 1; padding: 15px; background: transparent; border: 2px solid var(--neon-cyan); color: var(--neon-cyan); font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: bold; letter-spacing: 1px; cursor: pointer; transition: 0.3s; border-radius: 5px; }
+        .btn:hover { background: var(--neon-cyan); color: var(--dark-bg); box-shadow: 0 0 25px var(--neon-cyan); }
+        
+        .btn-mic { border-color: var(--neon-purple); color: var(--neon-purple); }
+        .btn-mic:hover { background: var(--neon-purple); color: white; box-shadow: 0 0 25px var(--neon-purple); }
+        .recording { background: var(--neon-red); color: white; border-color: var(--neon-red); animation: pulse 1s infinite; }
+
+        #results-panel { display: none; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .metric-group { margin-bottom: 20px; }
+        .label { color: #8892b0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        .value { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: bold; }
+        
+        .aspect-tag { display: inline-block; background: rgba(0, 243, 255, 0.1); border: 1px solid var(--neon-cyan); padding: 5px 10px; border-radius: 3px; font-family: 'Orbitron'; font-size: 0.9rem; margin-right: 5px; margin-top: 5px; color: var(--neon-cyan); text-transform: uppercase;}
+
+        .alert-box { padding: 15px; border-radius: 5px; text-align: center; font-weight: bold; letter-spacing: 2px; font-family: 'Orbitron', sans-serif; margin-bottom: 20px; }
+        .is-sarcastic { background: rgba(255, 0, 60, 0.1); border: 1px solid var(--neon-red); color: var(--neon-red); box-shadow: 0 0 20px rgba(255, 0, 60, 0.2); }
+        .not-sarcastic { background: rgba(0, 255, 102, 0.1); border: 1px solid var(--neon-green); color: var(--neon-green); }
+
+        .loader { display: none; color: var(--neon-cyan); text-align: center; font-family: 'Orbitron', sans-serif; letter-spacing: 3px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; text-shadow: 0 0 10px currentColor; } 100% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Sarcasm Recognizer</h1>
+            <div class="subtitle">MULTIMODAL SARCASM & ABSA INTELLIGENCE</div>
+        </header>
+
+        <div class="grid">
+            <div class="panel">
+                <div class="label">Input Data Stream (Text or Audio)</div>
+                <textarea id="text-input" placeholder="Type a sentence here, or click the mic to speak..."></textarea>
+                
+                <div class="btn-group">
+                    <button class="btn" id="analyze-btn" onclick="sendTextToAI()">PROCESS TEXT</button>
+                    <button class="btn btn-mic" id="mic-btn" onclick="toggleVoiceAI()">🎤 LIVE VOICE AI</button>
+                </div>
+                
+                <div id="loading-spinner" class="loader">PROCESSING...</div>
+            </div>
+
+            <div class="panel">
+                <div id="waiting-text" style="text-align: center; color: #495670; padding-top: 80px; font-family: 'Orbitron';">
+                    [ AWAITING MULTIMODAL SIGNAL ]
+                </div>
+
+                <div id="results-panel">
+                    <div id="sarcasm-alert" class="alert-box not-sarcastic">NOT SARCASTIC</div>
+
+                    <div class="metric-group">
+                        <div class="label">Final System Verdict</div>
+                        <div id="final-sentiment" class="value" style="color: var(--neon-cyan);">POSITIVE</div>
+                    </div>
+
+                    <div class="metric-group">
+                        <div class="label">Detected Aspects (ABSA)</div>
+                        <div id="aspects-container"></div>
+                    </div>
+
+                    <div class="grid" style="gap: 10px;">
+                        <div class="metric-group">
+                            <div class="label">Literal Base</div>
+                            <div id="base-sentiment" class="value" style="font-size: 1.2rem; color: #fff;">Positive</div>
+                        </div>
+                        <div class="metric-group">
+                            <div class="label">Confidence</div>
+                            <div id="confidence-score" class="value" style="font-size: 1.2rem; color: #fff;">98.50%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- UI Update Helpers ---
+        function updateUIProcessing(isProcessing) {
+            document.getElementById('analyze-btn').style.display = isProcessing ? 'none' : 'block';
+            document.getElementById('mic-btn').style.display = isProcessing ? 'none' : 'block';
+            document.getElementById('loading-spinner').style.display = isProcessing ? 'block' : 'none';
+            document.getElementById('waiting-text').style.display = 'none';
+            if(isProcessing) document.getElementById('results-panel').style.display = 'none';
+        }
+
+        function displayResults(data) {
+            document.getElementById('final-sentiment').innerText = data.final_sentiment.toUpperCase();
+            document.getElementById('base-sentiment').innerText = data.base_sentiment;
+            document.getElementById('confidence-score').innerText = data.confidence_score;
+
+            const sarcasmAlert = document.getElementById('sarcasm-alert');
+            if (data.is_sarcastic) {
+                sarcasmAlert.innerText = "SARCASTIC";
+                sarcasmAlert.className = "alert-box is-sarcastic";
+                document.getElementById('final-sentiment').style.color = "var(--neon-red)";
+            } else {
+                sarcasmAlert.innerText = "NOT SARCASTIC";
+                sarcasmAlert.className = "alert-box not-sarcastic";
+                document.getElementById('final-sentiment').style.color = "var(--neon-cyan)";
+            }
+
+            const aspectsContainer = document.getElementById('aspects-container');
+            aspectsContainer.innerHTML = '';
+            data.aspects_detected.forEach(aspect => {
+                const span = document.createElement('span');
+                span.className = 'aspect-tag';
+                span.innerText = aspect;
+                aspectsContainer.appendChild(span);
+            });
+
+            document.getElementById('results-panel').style.display = 'block';
+        }
+
+        // --- Core Fetch Logic ---
+        async function sendTextToAI() {
+            const text = document.getElementById('text-input').value.trim();
+            if (!text) return;
+
+            updateUIProcessing(true);
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                displayResults(await response.json());
+            } catch (error) {
+                alert("Connection Error. Is the Python server running?");
+            } finally {
+                updateUIProcessing(false);
+            }
+        }
+
+        // --- WEB SPEECH API INTEGRATION ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isRecording = false;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            // You can change this to 'hi-IN' for Hindi or 'bn-IN' for Bengali!
+            recognition.lang = 'en-US'; 
+            recognition.interimResults = false;
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                // Put the spoken words into the text box
+                document.getElementById('text-input').value = transcript;
+                
+                // Immediately send it to the Python AI
+                sendTextToAI(); 
+                resetMicButton();
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error", event.error);
+                alert("Microphone error: " + event.error);
+                resetMicButton();
+            };
+
+            recognition.onend = () => {
+                resetMicButton();
+            };
+        } else {
+            console.warn("Web Speech API not supported in this browser.");
+        }
+
+        function resetMicButton() {
+            isRecording = false;
+            const micBtn = document.getElementById('mic-btn');
+            micBtn.innerText = "🎤 LIVE VOICE AI";
+            micBtn.classList.remove("recording");
+        }
+
+        function toggleVoiceAI() {
+            if (!recognition) {
+                alert("Sorry, your browser doesn't support native speech recognition. Try Google Chrome or Edge.");
+                return;
+            }
+
+            const micBtn = document.getElementById('mic-btn');
+
+            if (isRecording) {
+                recognition.stop();
+                resetMicButton();
+            } else {
+                // Clear the box and start listening
+                document.getElementById('text-input').value = "";
+                document.getElementById('text-input').placeholder = "Listening... Speak now!";
+                
+                recognition.start();
+                isRecording = true;
+                micBtn.innerText = "⏹ STOP LISTENING";
+                micBtn.classList.add("recording");
+            }
+        }
+    </script>
+</body>
+</html>
